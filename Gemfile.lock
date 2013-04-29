@@ -1,0 +1,19 @@
+GIT
+  remote: https://github.com/celluloid/celluloid.git
+  revision: cdfab73bdb7df67e1347e064260c13e532165a15
+  specs:
+    celluloid (0.14.0.pre)
+      timers (>= 1.0.0)
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    ice_cube (0.10.0)
+    timers (1.1.0)
+
+PLATFORMS
+  java
+
+DEPENDENCIES
+  celluloid!
+  ice_cube
