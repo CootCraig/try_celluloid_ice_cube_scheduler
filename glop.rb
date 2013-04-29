@@ -23,8 +23,11 @@ module Scheduler
       @schedule_timer = nil
       schedule_next
     end
-    def schedule_next
-      seconds = seconds_to_next
+    def cancel_schedule
+      cancel_timers
+      @actor.scheduled_blocks.delete self
+    end
+    def cancel_timers
       unless @method_timer.nil?
         @method_timer.cancel
         @method_timer = nil
@@ -33,6 +36,10 @@ module Scheduler
         @schedule_timer.cancel
         @schedule_timer = nil
       end
+    end
+    def schedule_next
+      cancel_timers
+      seconds = seconds_to_next
       if seconds>0
         @method_timer = @actor.after(seconds) {@actor.async(@method,*@args)}
       end
@@ -53,18 +60,32 @@ class AnActor
   def hello(*args)
     puts "hello #{Time.now} args #{args}"
   end
+  def no(*args)
+    puts "no #{Time.now} args #{args}"
+  end
 end
 
 o = AnActor.new
-s = IceCube::Schedule.new
-s.add_recurrence_rule IceCube::Rule.secondly(5)
-puts "s.next_occurence #{s.next_occurrence}"
+s1 = IceCube::Schedule.new
+s1.add_recurrence_rule IceCube::Rule.secondly(5)
+puts "secondly(5) next_occurence #{s1.next_occurrence}"
 o.hello 'direct'
-o.run_on_schedule(s,:hello,'scheduled')
+secondly_schedule = o.run_on_schedule(s1,:hello,'secondly(5)')
+
 now = Time.now
 s2 = IceCube::Schedule.new Time.local(now.year,now.month,now.day,23,30)
 s2.add_recurrence_rule IceCube::Rule.daily
-puts "s2.next_occurence #{s2.next_occurrence}"
+puts "daily 23:30 next_occurence #{s2.next_occurrence}"
 o.run_on_schedule(s2,:hello,'daily')
-sleep 20
+
+start = Time.now - 120
+[1,12,22,28,46,51,55].each do |sec|
+  s = IceCube::Schedule.new Time.local(start.year,start.month,start.day,start.hour,start.min,sec)
+  s.add_recurrence_rule IceCube::Rule.minutely
+  o.run_on_schedule(s,:no,"minutely on the #{sec}")
+end
+sleep 45
+puts "cancel secondly_schedule"
+secondly_schedule.cancel_schedule
+sleep 4*60
 
